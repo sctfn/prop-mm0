@@ -34,6 +34,8 @@ pub theorem imim2i (h: $ ph -> ps $): $ (ch -> ph) -> (ch -> ps) $=
     '(a2i (a1i h));
 pub theorem syl (h1: $ ph -> ps $) (h2: $ ps -> ch $): $ ph -> ch $=
     '(ax_mp h1 @ imim2i h2);
+pub theorem a1d (h: $ ph -> ps $): $ ph -> ch -> ps $= '(syl h ax_1);
+
 pub theorem imim2: $ (ph -> ps) -> (ch -> ph) -> (ch -> ps) $=
     '(syl ax_1 ax_2);
 pub theorem com12 (h: $ ph -> ps -> ch $): $ ps -> ph -> ch $=
@@ -41,6 +43,62 @@ pub theorem com12 (h: $ ph -> ps -> ch $): $ ps -> ph -> ch $=
 pub theorem imim1: $ (ph -> ps) -> (ps -> ch) -> (ph -> ch) $= '(com12 imim2);
 pub theorem imim1i (h: $ ph -> ps $): $ (ps -> ch) -> (ph -> ch) $=
     '(ax_mp h imim1);
+pub theorem pm2_43i (h: $ ph -> ph -> ps $): $ ph -> ps $= '(ax_mp id (a2i h));
+pub theorem sylcom (h1: $ ph -> ps -> ch $) (h2: $ ps -> ch -> th $):
+    $ ph -> ps -> th $= '(syl h1 (a2i h2));
+pub theorem syl5com (h1: $ ph -> ps $) (h2: $ ch -> ps -> th $):
+    $ ph -> ch -> th $= '(sylcom (a1d h1) h2);
+pub theorem syl5 (h1: $ ph -> ps $) (h2: $ ch -> ps -> th $):
+    $ ch -> ph -> th $= '(com12 @ syl5com h1 h2);
+pub theorem syl2im (h1: $ ph -> ps $) (h2: $ ch -> th $)
+    (h3: $ ps -> th -> ta $): $ ph -> ch -> ta $=
+    '(syl h1 @ syl5 h2 h3);
+pub theorem sylc (h1: $ ph -> ps $) (h2: $ ph -> ch $)
+    (h3: $ ps -> ch -> th $): $ ph -> th $= '(pm2_43i @ syl2im h1 h2 h3);
+pub theorem syl6 (h1: $ ph -> ps -> ch $) (h2: $ ch -> th $):
+    $ ph -> ps -> th $= '(sylcom h1 @ a1i h2);
+pub theorem pm2_27: $ ph -> (ph -> ps) -> ps $= '(com12 id);
+
+
+-- Conjunction
+pub theorem imp (h: $ ph -> ps -> ch $): $ ph /\ ps -> ch $=
+    '(sylc ax_ia1 ax_ia2 h);
+pub theorem exp (h: $ ph /\ ps -> ch $): $ ph -> ps -> ch $=
+    '(syl6 ax_ia3 h);    .
+pub theorem syl2anc (h1: $ ph -> ps $) (h2: $ ph -> ch $)
+   (h3: $ ps /\ ch -> th $): $ ph -> th $= '(sylc h1 h2 (exp h3));
+pub theorem adantl (h: $ ph -> ps $): $ ch /\ ph -> ps $ = '(syl ax_ia2 h);
+pub theorem adantr (h: $ ph -> ps $): $ ph /\ ch -> ps $ = '(syl ax_ia1 h);
+
+-- Function to repeatedly eliminate conjuncts to prove an implication
+do (def (adant refine t)
+  @ match t @ $ ,lhs -> ,rhs $
+  @ letrec (
+    [(f lhs)
+      @ match lhs
+      [$ ,l /\ ,r $
+        @ match (f l)
+          [#undef
+            @ match (f r)
+            [#undef #undef]
+            [result '(adantl ,result)]]
+          [result '(adantr ,result)]]
+      [_ @ if {lhs == rhs} 'id]]
+  )
+  @ refine t (f lhs));
+
+theorem _: $ ph /\ ps /\ ch -> ph $= adant;
+
+pub theorem jca (h1: $ ph -> ps $) (h2: $ ph -> ch $): $ ph -> ps /\ ch $=
+    '(sylc h1 h2 ax_ia3);
+pub theorem anass: $ ph /\ ps /\ ch -> ph /\ (ps /\ ch) $=
+    '(jca (adantr ax_ia1) (jca (adantr ax_ia2) ax_ia2));
+pub theorem anassr: $ ph /\ (ps /\ ch) -> ph /\ ps /\ ch $=
+    '(jca (jca ax_ia1 (adantl ax_ia1)) (adantl ax_ia2));
+
+
+-- False
+theorem f_int: $ F. /\ ph -> ps $= '(syl ax_ia1 ax_f);
 
 -- Negation
 def wn (ph: wff): wff = $ ph -> F. $;
@@ -57,3 +115,17 @@ pub theorem biimp (ph ps: wff): $ (ph <-> ps) -> ph -> ps $= 'ax_ia1;
 pub theorem biimpr (ph ps: wff): $ (ph <-> ps) -> ps -> ph $= 'ax_ia2;
 pub theorem impbii (ph ps: wff): $ (ph -> ps) -> (ps -> ph) -> (ph <-> ps) $=
   'ax_ia3;
+
+-- Tautology helpers
+pub theorem tauto_ax: $ G /\ ph -> ph $= 'ax_ia2;
+--pub theorem tauto_fint: $ G /\ F. -> ph $= '(syl (adant 'ax_f);
+pub theorem tauto_aint (h: $ G /\ ph /\ ps -> ch $):
+    $ G /\ (ph /\ ps) -> ch $= '(syl anassr h);
+pub theorem tauto_aelim (h1: $ G -> ph $) (h2: $ G -> ps $):
+    $ G -> ph /\ ps $= '(jca h1 h2);
+pub theorem tauto_oelim1 (h: $ G -> ph $): $ G -> ph \/ ps $= '(syl h ax_io2);
+pub theorem tauto_oelim2 (h: $ G -> ps $): $ G -> ph \/ ps $= '(syl h ax_io3);
+pub theorem tauto_ielim (h: $ G /\ ph -> ps $): $ G -> ph -> ps $=
+    '(exp h);
+-- pub theorem tauto_iinti (h: $ G /\ ph /\ ps -> ch $ ):
+--     $ G /\ (ph -> ps) /\ ph -> ch $= 'sorry;
