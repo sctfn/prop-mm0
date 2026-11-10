@@ -4,7 +4,7 @@ strict provable sort wff;
 -- Axioms for implication
 term wi (ph ps: wff): wff; infixr wi: $->$ prec 25;
 axiom ax_1 (ph ps: wff): $ ph -> ps -> ph $;
-axiom ax_2 (ph ps: wff): $ (ph -> ps -> ch) -> (ph -> ps) -> ph -> ch $;
+axiom ax_2 (ph ps ch: wff): $ (ph -> ps -> ch) -> (ph -> ps) -> ph -> ch $;
 axiom ax_mp (ph ps: wff): $ ph $ > $ ph -> ps $ > $ ps $;
 
 -- Axioms for conjunction
@@ -19,10 +19,30 @@ axiom ax_io1 (ph ps ch: wff): $ (ph -> ch) -> (ps -> ch) -> ph \/ ps -> ch $;
 axiom ax_io2 (ph ps: wff): $ ph -> ph \/ ps $;
 axiom ax_io3 (ph ps: wff): $ ph -> ps \/ ph $;
 
--- Axioms for negation
-term wn (ph: wff): wff; prefix wn: $~$ prec 41;
-axiom ax_in1 (ph: wff): $ (ph -> ~ ph) -> ~ ph $;
-axiom ax_in2 (ph ps: wff): $ ~ ph -> ph -> ps $;
+-- Axiom for false
+term wfal: wff; prefix wfal: $F.$ prec max;
+axiom ax_f (ph: wff): $ F. -> ph $;
 
+-- Initial theorems
 theorem a1i (ph ps: wff) (h: $ ph $): $ ps -> ph $;
-theorem a2i (ph ps ch: wff) (h: $ ph -> ps -> ch $): $ (ph -> ps) -> ph -> ch $;
+theorem a2i (ph ps ch: wff) (h: $ ph -> ps -> ch $):
+        $ (ph -> ps) -> ph -> ch $;
+theorem mpd (ph ps ch: wff) (h1: $ ph -> ps $) (h2: $ ph -> ps -> ch $):
+        $ ph -> ch $;
+theorem id (ph: wff): $ ph -> ph $;
+theorem syl (ph ps ch: wff) (h1: $ ph -> ps $) (h2: $ ps -> ch $):
+    $ ph -> ch $;
+
+-- Negation
+def wn (ph: wff): wff = $ ph -> F. $;
+prefix wn: $~$ prec 41;
+
+theorem n_int (ph ps: wff): $ ~ ph -> ph -> ps $;
+
+-- Biconditional
+def wb (ph ps: wff): wff = $ (ph -> ps) /\ (ps -> ph) $;
+infixl wb: $<->$ prec 20;
+
+theorem biimp (ph ps: wff): $ (ph <-> ps) -> ph -> ps $;
+theorem biimpr (ph ps: wff): $ (ph <-> ps) -> ps -> ph $;
+theorem impbii (ph ps: wff): $ (ph -> ps) -> (ps -> ph) -> (ph <-> ps) $;
