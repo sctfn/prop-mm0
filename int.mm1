@@ -3,27 +3,57 @@ strict provable sort wff;
 
 -- Axioms for implication
 term wi (ph ps: wff): wff; infixr wi: $->$ prec 25;
-axiom ax_1 (ph ps: wff): $ ph -> ps -> ph $;
-axiom ax_2 (ph ps: wff): $ (ph -> ps -> ch) -> (ph -> ps) -> ph -> ch $;
-axiom ax_mp (ph ps: wff): $ ph $ > $ ph -> ps $ > $ ps $;
+axiom ax_1: $ ph -> ps -> ph $;
+axiom ax_2: $ (ph -> ps -> ch) -> (ph -> ps) -> ph -> ch $;
+axiom ax_mp: $ ph $ > $ ph -> ps $ > $ ps $;
 
 -- Axioms for conjunction
 term wa (ph ps: wff): wff; infixl wa: $/\$ prec 34;
-axiom ax_ia1 (ph ps: wff): $ ph /\ ps -> ph $;
-axiom ax_ia2 (ph ps: wff): $ ph /\ ps -> ps $;
-axiom ax_ia3 (ph ps: wff): $ ph -> ps -> ph /\ ps $;
+axiom ax_ia1: $ ph /\ ps -> ph $;
+axiom ax_ia2: $ ph /\ ps -> ps $;
+axiom ax_ia3: $ ph -> ps -> ph /\ ps $;
 
 -- Axioms for disjunction
 term wo (ph ps: wff): wff; infixl wo: $\/$ prec 30;
-axiom ax_io1 (ph ps ch: wff): $ (ph -> ch) -> (ps -> ch) -> ph \/ ps -> ch $;
-axiom ax_io2 (ph ps: wff): $ ph -> ph \/ ps $;
-axiom ax_io3 (ph ps: wff): $ ph -> ps \/ ph $;
+axiom ax_io1: $ (ph -> ch) -> (ps -> ch) -> ph \/ ps -> ch $;
+axiom ax_io2: $ ph -> ph \/ ps $;
+axiom ax_io3: $ ph -> ps \/ ph $;
 
--- Axioms for negation
-term wn (ph: wff): wff; prefix wn: $~$ prec 41;
-axiom ax_in1 (ph: wff): $ (ph -> ~ ph) -> ~ ph $;
-axiom ax_in2 (ph ps: wff): $ ~ ph -> ph -> ps $;
+-- Axiom for false
+term wfal: wff; prefix wfal: $F.$ prec max;
+axiom ax_f: $ F. -> ph $;
 
-pub theorem a1i (ph ps: wff) (h: $ ph $): $ ps -> ph $= '(ax_mp h ax_1);
-pub theorem a2i (ph ps ch: wff) (h: $ ph -> ps -> ch $):
-    $ (ph -> ps) -> ph -> ch $= '(ax_mp h ax_2);
+-- Implication theorems
+pub theorem a1i (h: $ ph $): $ ps -> ph $= '(ax_mp h ax_1);
+pub theorem a2i (h: $ ph -> ps -> ch $): $ (ph -> ps) -> ph -> ch $=
+    '(ax_mp h ax_2);
+pub theorem mpd (h1: $ ph -> ps $) (h2: $ ph -> ps -> ch $): $ ph -> ch $=
+    '(ax_mp h1 (a2i h2));
+pub theorem id: $ ph -> ph $= '(mpd (! ax_1 _ ph) ax_1);
+pub theorem imim2i (h: $ ph -> ps $): $ (ch -> ph) -> (ch -> ps) $=
+    '(a2i (a1i h));
+pub theorem syl (h1: $ ph -> ps $) (h2: $ ps -> ch $): $ ph -> ch $=
+    '(ax_mp h1 @ imim2i h2);
+pub theorem imim2: $ (ph -> ps) -> (ch -> ph) -> (ch -> ps) $=
+    '(syl ax_1 ax_2);
+pub theorem com12 (h: $ ph -> ps -> ch $): $ ps -> ph -> ch $=
+    '(syl ax_1 (a2i h));
+pub theorem imim1: $ (ph -> ps) -> (ps -> ch) -> (ph -> ch) $= '(com12 imim2);
+pub theorem imim1i (h: $ ph -> ps $): $ (ps -> ch) -> (ph -> ch) $=
+    '(ax_mp h imim1);
+
+-- Negation
+def wn (ph: wff): wff = $ ph -> F. $;
+prefix wn: $~$ prec 41;
+
+pub theorem n_int: $ ~ ph -> ph -> ps $=
+    '(a2i (a1i ax_f));
+
+-- Biconditional
+def wb (ph ps: wff): wff = $ (ph -> ps) /\ (ps -> ph) $;
+infixl wb: $<->$ prec 20;
+
+pub theorem biimp (ph ps: wff): $ (ph <-> ps) -> ph -> ps $= 'ax_ia1;
+pub theorem biimpr (ph ps: wff): $ (ph <-> ps) -> ps -> ph $= 'ax_ia2;
+pub theorem impbii (ph ps: wff): $ (ph -> ps) -> (ps -> ph) -> (ph <-> ps) $=
+  'ax_ia3;
